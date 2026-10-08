@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Scientific Calculator — FX Style</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
+<style>
+:root{--bg:#111318;--panel:#20242c;--key:#303641;--key2:#3b4350;--screen:#cbd5b2;--ink:#111;--accent:#8fc7ff;--danger:#e58a8a}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#252a34,#0c0e12 65%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#fff;min-height:100vh}
+.app{max-width:560px;margin:auto;padding:16px 10px 24px}.brand{font-weight:800;letter-spacing:.08em;text-align:center;color:#dce6f5;margin:4px 0 12px}
+.calc{background:linear-gradient(145deg,#2a2f38,#171a20);border:1px solid #454b56;border-radius:24px;padding:14px;box-shadow:0 18px 55px #0008}
+.screen{background:linear-gradient(180deg,#d9e2c3,#bac79d);color:var(--ink);border-radius:12px;padding:8px 12px;min-height:92px;border:3px solid #17191c;box-shadow:inset 0 2px 8px #0005;margin-bottom:10px;overflow:hidden}
+.ind{font:700 12px monospace;height:17px}.expr{font:16px monospace;white-space:nowrap;overflow:auto;text-align:right}.ans{font:700 27px monospace;white-space:nowrap;overflow:auto;text-align:right}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:7px}
+.keygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+button{border:0!important;border-radius:9px!important;min-height:47px;font-weight:700;font-size:15px;background:var(--key);color:#f3f5f8;box-shadow:inset 0 1px #ffffff12,0 2px #090a0c;touch-action:manipulation}
+button:active{transform:translateY(2px);box-shadow:none}.fn{font-size:12px;background:#252b34;color:#cbd5e1}.op{background:var(--key2)}.accent{background:#4a5f77}.danger{background:#704044}.equals{background:#536b45}.wide{grid-column:span 2}.modebar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0}.badge-mode{background:#11161d;border:1px solid #414955;color:#cfe0f5;border-radius:7px;padding:4px 8px;font:700 11px monospace}.history{max-height:120px;overflow:auto;margin-top:8px;font:12px monospace;color:#cbd5e1}.history div{padding:3px 5px;border-bottom:1px solid #ffffff0b;cursor:pointer}.section-title{font-size:12px;color:#9da8b7;margin:12px 0 5px;text-transform:uppercase;letter-spacing:.1em}
+@media(max-width:390px){button{min-height:43px;font-size:13px}.ans{font-size:23px}.app{padding:8px 5px}.calc{padding:9px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="brand">SCIENTIFIC CALCULATOR</div>
+<div class="calc">
+  <div class="screen">
+    <div class="ind" id="ind">DEG</div>
+    <div class="expr" id="expr">0</div>
+    <div class="ans" id="ans">0</div>
+  </div>
+
+  <div class="modebar">
+    <span class="badge-mode" id="angleBadge">DEG</span>
+    <span class="badge-mode" id="shiftBadge">NORMAL</span>
+    <span class="badge-mode" id="memoryBadge">M:0</span>
+    <button class="fn" onclick="cycleAngle()">ANGLE</button>
+    <button class="fn" onclick="toggleShift()">SHIFT</button>
+    <button class="fn" onclick="toggleAlpha()">ALPHA</button>
+  </div>
+
+  <div class="tools">
+    <button class="fn" onclick="setMode('NORMAL')">NORMAL</button>
+    <button class="fn" onclick="setMode('CMPLX')">CMPLX</button>
+    <button class="fn" onclick="setMode('STAT')">STAT</button>
+    <button class="fn" onclick="setMode('MATRIX')">MATRIX</button>
+    <button class="fn" onclick="setMode('EQN')">EQN</button>
+    <button class="fn" onclick="setMode('BASE')">BASE-N</button>
+    <button class="fn" onclick="showInfo()">INFO</button>
+    <button class="fn" onclick="clearAll()">AC</button>
+  </div>
+
+  <div class="section-title">Functions</div>
+  <div class="keygrid">
+    <button class="fn" onclick="put('sin(')">sin</button><button class="fn" onclick="put('cos(')">cos</button><button class="fn" onclick="put('tan(')">tan</button><button class="fn" onclick="put('log10(')">log</button><button class="fn" onclick="put('log(')">ln</button>
+    <button class="fn" onclick="put('asin(')">sin⁻¹</button><button class="fn" onclick="put('acos(')">cos⁻¹</button><button class="fn" onclick="put('atan(')">tan⁻¹</button><button class="fn" onclick="put('sqrt(')">√</button><button class="fn" onclick="put('cbrt(')">∛</button>
+    <button class="fn" onclick="put('sinh(')">sinh</button><button class="fn" onclick="put('cosh(')">cosh</button><button class="fn" onclick="put('tanh(')">tanh</button><button class="fn" onclick="put('^2')">x²</button><button class="fn" onclick="put('^')">xʸ</button>
+    <button class="fn" onclick="put('!')">x!</button><button class="fn" onclick="put('abs(')">|x|</button><button class="fn" onclick="put('inv(')">1/x</button><button class="fn" onclick="put('pi')">π</button><button class="fn" onclick="put('e')">e</button>
+  </div>
+
+  <div class="section-title">Keypad</div>
+  <div class="keygrid">
+    <button class="danger" onclick="back()">DEL</button><button class="danger" onclick="clearEntry()">CE</button><button class="op" onclick="put('(')">(</button><button class="op" onclick="put(')')">)</button><button class="op" onclick="put('/')">÷</button>
+    <button onclick="put('7')">7</button><button onclick="put('8')">8</button><button onclick="put('9')">9</button><button class="op" onclick="put('*')">×</button><button class="op" onclick="put('%')">%</button>
+    <button onclick="put('4')">4</button><button onclick="put('5')">5</button><button onclick="put('6')">6</button><button class="op" onclick="put('-')">−</button><button class="op" onclick="put('^')">^</button>
+    <button onclick="put('1')">1</button><button onclick="put('2')">2</button><button onclick="put('3')">3</button><button class="op" onclick="put('+')">+</button><button class="accent" onclick="calculate()">=</button>
+    <button class="wide" onclick="put('0')">0</button><button onclick="put('.')">.</button><button class="op" onclick="put(',')">,</button><button class="op" onclick="toggleSign()">±</button>
+  </div>
+
+  <div class="section-title">Memory & Extras</div>
+  <div class="keygrid">
+    <button class="fn" onclick="mem('MC')">MC</button><button class="fn" onclick="mem('MR')">MR</button><button class="fn" onclick="mem('M+')">M+</button><button class="fn" onclick="mem('M-')">M−</button><button class="fn" onclick="put('random()')">Ran#</button>
+    <button class="fn" onclick="put('nCr(')">nCr</button><button class="fn" onclick="put('nPr(')">nPr</button><button class="fn" onclick="put('floor(')">floor</button><button class="fn" onclick="put('ceil(')">ceil</button><button class="fn" onclick="showHistory()">HIST</button>
+  </div>
+
+  <div class="history" id="history"></div>
+</div>
+<div class="text-center mt-2 small text-secondary">Keyboard supported • mobile friendly • calculator engine powered by math.js</div>
+</div>
+
+<script>
+let expression='', memory=0, angle='DEG', shift=false, alpha=false, mode='NORMAL', hist=[];
+const $=id=>document.getElementById(id);
+function render(){
+  $('expr').textContent=expression||'0'; $('ans').textContent=$('ans').textContent||'0';
+  $('angleBadge').textContent=angle; $('shiftBadge').textContent=shift?'SHIFT':'NORMAL';
+  $('memoryBadge').textContent='M:'+format(memory); $('ind').textContent=angle+'  '+mode;
+}
+function put(s){expression+=s; $('ans').textContent='0';render()}
+function back(){expression=expression.slice(0,-1);render()}
+function clearEntry(){expression='';$('ans').textContent='0';render()}
+function clearAll(){expression='';$('ans').textContent='0';hist=[];render();showHistory()}
+function cycleAngle(){angle=angle==='DEG'?'RAD':angle==='RAD'?'GRAD':'DEG';render()}
+function toggleShift(){shift=!shift;render()}
+function toggleAlpha(){alpha=!alpha;render()}
+function setMode(m){mode=m; $('ind').textContent=angle+'  '+mode; if(m==='STAT') statPanel(); else if(m==='MATRIX') matrixPanel(); else if(m==='EQN') eqnPanel(); else if(m==='BASE') basePanel(); render()}
+function format(x){if(typeof x==='number') return math.format(x,{precision:14}); return String(x)}
+function trigSetup(){
+  const f=angle==='DEG'?x=>x*Math.PI/180:angle==='GRAD'?x=>x*Math.PI/200:x=>x;
+  const inv=angle==='DEG'?x=>x*180/Math.PI:angle==='GRAD'?x=>x*200/Math.PI:x=>x;
+  return {f,inv};
+}
+function evaluate(s){
+  let {f,inv}=trigSetup();
+  const scope={
+    pi:Math.PI,e:Math.E,
+    sin:x=>Math.sin(f(x)),cos:x=>Math.cos(f(x)),tan:x=>Math.tan(f(x)),
+    asin:x=>inv(Math.asin(x)),acos:x=>inv(Math.acos(x)),atan:x=>inv(Math.atan(x)),
+    sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,
+    log10:x=>Math.log10(x),log:x=>Math.log(x),sqrt:Math.sqrt,cbrt:Math.cbrt,
+    abs:Math.abs,floor:Math.floor,ceil:Math.ceil,
+    inv:x=>1/x,random:Math.random,
+    nCr:(n,r)=>math.combinations(n,r), nPr:(n,r)=>math.permutations(n,r)
+  };
+  // Convert percent to decimal only for simple numeric percentages.
+  s=s.replace(/(\d+(?:\.\d+)?)%/g,'($1/100)');
+  return math.evaluate(s,scope);
+}
+function calculate(){
+  if(!expression)return;
+  try{
+    const v=evaluate(expression); const out=format(v);
+    $('ans').textContent=out; hist.unshift(expression+' = '+out); if(hist.length>30)hist.pop(); showHistory(); expression=String(out); render();
+  }catch(e){$('ans').textContent='Error';}
+}
+function toggleSign(){if(!expression)return; expression=expression.startsWith('-')?expression.slice(1):'-('+expression+')';render()}
+function mem(op){
+  try{
+    if(op==='MC')memory=0;
+    else if(op==='MR')put(format(memory));
+    else {let v=Number(evaluate(expression||'0')); if(op==='M+')memory+=v;if(op==='M-')memory-=v;}
+  }catch(e){} render()
+}
+function showHistory(){ $('history').innerHTML=hist.map((h,i)=>`<div onclick="expression=${JSON.stringify(h.split(' = ')[0])};render()">${escapeHtml(h)}</div>`).join('') }
+function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+function showInfo(){alert('This is an independent FX-style scientific calculator, not an official Casio product. It supports core scientific functions plus statistics, equations, matrices and base conversion tools.')}
+function statPanel(){
+  const raw=prompt('Enter data values separated by commas (example: 2,4,5,8):');
+  if(!raw)return;
+  const a=raw.split(',').map(Number).filter(Number.isFinite);
+  if(!a.length)return;
+  const mean=math.mean(a), sd=math.std(a), sum=math.sum(a), n=a.length;
+  $('ans').textContent=`n=${n}  Σ=${format(sum)}  x̄=${format(mean)}  σ=${format(sd)}`;
+  hist.unshift(`STAT: n=${n}, mean=${format(mean)}, sd=${format(sd)}`);showHistory()
+}
+function matrixPanel(){
+  const a=prompt('Matrix A rows. Example: [[1,2],[3,4]]');
+  if(!a)return;
+  try{
+    const M=math.matrix(JSON.parse(a)); const det=math.det(M); const invM=math.inv(M);
+    $('expr').textContent='det(A) / inv(A)'; $('ans').textContent=`det=${format(det)} | inv=${JSON.stringify(invM.valueOf())}`;
+    hist.unshift(`A=${a} → det=${format(det)} | inv=${JSON.stringify(invM.valueOf())}`);showHistory()
+  }catch(e){$('ans').textContent='Matrix Error'}
+}
+function eqnPanel(){
+  const type=prompt('Equation type: linear, quadratic, or system2');
+  if(!type)return;
+  try{
+    if(type.toLowerCase()==='linear'){
+      const a=+prompt('a'); const b=+prompt('b'); const x=-b/a;
+      $('ans').textContent='x='+format(x)
+    }else if(type.toLowerCase()==='quadratic'){
+      const a=+prompt('a');const b=+prompt('b');const c=+prompt('c');const d=b*b-4*a*c;
+      if(d>=0)$('ans').textContent=`x1=${format((-b+Math.sqrt(d))/(2*a))}, x2=${format((-b-Math.sqrt(d))/(2*a))}`;
+      else {$('ans').textContent='Complex roots'; const re=-b/(2*a),im=Math.sqrt(-d)/(2*a); $('ans').textContent=`x1=${format(re)}+${format(im)}i, x2=${format(re)}-${format(im)}i`}
+    }else if(type.toLowerCase()==='system2'){
+      const a=+prompt('a1'),b=+prompt('b1'),c=+prompt('c1'),d=+prompt('a2'),e=+prompt('b2'),f=+prompt('c2');
+      const D=a*e-b*d; const x=(c*e-b*f)/D, y=(a*f-c*d)/D;
+      $('ans').textContent=`x=${format(x)}, y=${format(y)}`
+    }
+  }catch(e){$('ans').textContent='EQN Error'}
+}
+function basePanel(){
+  const from=prompt('From base: 2, 8, 10, or 16'); const to=prompt('To base: 2, 8, 10, or 16'); const val=prompt('Number');
+  try{$('ans').textContent=parseInt(val,Number(from)).toString(Number(to)).toUpperCase()}catch(e){$('ans').textContent='BASE Error'}
+}
+document.addEventListener('keydown',e=>{
+ const k=e.key;
+ if(/[0-9.]/.test(k))put(k); else if('+-*/^(),'.includes(k))put(k);
+ else if(k==='Enter')calculate(); else if(k==='Backspace')back(); else if(k==='Escape')clearEntry();
+});
+render();
+</script>
+</body>
+</html>
